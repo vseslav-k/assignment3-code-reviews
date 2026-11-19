@@ -20,10 +20,16 @@ def update_assignments(data, centroids):
     Resolve equal-distance ties consistently and document your rule.
     """
     # TODO: Compute distances and assign each point to a centroid.
+    # This array will store what point belongs to what cluster. Assignment[i] = k means pt i belongs to cluster k. This array will be returned in the end
     assignment = np.zeros(data.shape[0], dtype=int)
+
+    # iterate over every point
     for ptIdx in range(0, data.shape[0]):
+        # predefine varibable to avoid recalculations
         closestCentroidIdx = 0
+        # init minDist with first centroid
         minDist = np.linalg.norm(centroids[0] - data[ptIdx])
+        # in this loop we just iterate over every centroid and see which one is closest and store it in minDist
         for centeroidIdx in range(1, centroids.shape[0]):
             currDist = np.linalg.norm(centroids[centeroidIdx]- data[ptIdx])
             if(currDist < minDist):
@@ -31,7 +37,7 @@ def update_assignments(data, centroids):
                 closestCentroidIdx = centeroidIdx
 
             # if two centroids are at same distance from a point, select the one with lowest idx. Done implicitly
-
+        # Assign closest centroid to that pt
         assignment[ptIdx] = closestCentroidIdx
     return assignment
 
@@ -47,14 +53,16 @@ def update_centroids(data, centroids, assignments):
     Document how you handle an empty cluster. One valid choice is to retain
     its previous centroid. Avoid modifying the input centroid array in place.
     """
-    # TODO: Update the centroid of each nonempty cluster.
-    # TODO: Handle empty clusters using your documented policy.
+    # create newCentroids array to avoid modifying old one
     newCentroids = np.zeros(centroids.shape, dtype=float)
     ptCount = np.zeros(centroids.shape[0], dtype=int)
+
+    # find ptCount count and pt sum for all clusters to calculate new average later on
     for i in range(0, assignments.shape[0]):
         newCentroids[assignments[i]] += data[i]
         ptCount[assignments[i]] += 1
 
+    # calculate the new centroids by dividing cluster sum by cluster count
     for i in range(0, newCentroids.shape[0]):
         if(ptCount[i] > 0):
             newCentroids[i] /= ptCount[i]
@@ -62,6 +70,8 @@ def update_centroids(data, centroids, assignments):
             newCentroids[i] = centroids[i]
     return newCentroids
 
+
+# used for determining how good cluster assingments are
 def calc_inertia(data, centroids, assignments):
     """Return the k-means objective: the sum of squared distances from each
     point to its assigned centroid (within-cluster sum of squares)."""
@@ -146,11 +156,11 @@ def run_experiments(output_dir, seed=0, max_iterations=100):
     true_centers = np.array([data[truth == j].mean(axis=0) for j in range(4)])
     plot_kmeans(data, true_centers, truth, "truth.png", output_dir)
 
-    kmeans_times = 10
+    kmeans_times = 10 
     for k in K_VALUES:
         results = []
-        for _ in range(0, kmeans_times):
-            centroids = np.zeros((k, data.shape[1]))
+        for _ in range(0, kmeans_times): # run multiple times to try avoid getting stuck in a local inertia minimum
+            centroids = np.zeros((k, data.shape[1])) 
             seen = set()
             # chose k random points to be initial centroids
             for i in range(0, k):
@@ -161,8 +171,10 @@ def run_experiments(output_dir, seed=0, max_iterations=100):
                 centroids[i] = data[x]
 
             centroids, assignments = kmeans(data, centroids, max_iterations)
-            results.append((centroids, assignments, calc_inertia(data, centroids, assignments)))
 
+            # Store potential cluster assingment and its inertia(how good it is)
+            results.append((centroids, assignments, calc_inertia(data, centroids, assignments))) 
+        # best is with loewst inertia
         best = min(results, key=lambda t: t[2])
         plot_kmeans(data, best[0], best[1], f"kmeans_k{k}.png", output_dir)
         
