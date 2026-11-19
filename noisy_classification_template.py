@@ -49,8 +49,8 @@ def repair_labels_knn(train_features, noisy_labels, neighbors):
     sklearn.neighbors may be used; from-scratch K-NN is not a source requirement.
     """
     nn = NearestNeighbors(n_neighbors=neighbors).fit(train_features)
-    idx = nn.kneighbors(return_distance=False)
-    votes = noisy_labels[idx].sum(axis=1)
+    idx = nn.kneighbors(return_distance=False) 
+    votes = noisy_labels[idx].sum(axis=1) # since votes are unweighted and binary, we can just sum them
     return np.where(votes > 0, 1, -1)
 
 
@@ -81,7 +81,7 @@ def run_comparison(repeats, seed, neighbors, output_path):
     rows = []
     for trial in range(repeats):
         # Fresh corruption each trial (test labels stay clean)
-        noisy_labels = corrupt_training_labels(train_labels, rng)
+        noisy_labels = corrupt_training_labels(train_labels, rng) 
 
         # Baseline: SVM trained directly on the noisy labels
         baseline_acc = train_and_evaluate(train_features, noisy_labels,
